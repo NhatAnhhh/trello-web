@@ -28,7 +28,7 @@ const ACTIVE_DRAG_ITEM_TYPE ={
   CARD: 'ACTIVE_DRAG_ITEM_CARD'
 }
 
-function BoardContent({ board, createNewColumn, createNewCard }) {
+function BoardContent({ board, createNewColumn, createNewCard, moveColumns }) {
   // Yeu cau chuot di chuyen 10px thi moi dc kich hoat event, fix TH click bi goi envet
   // const pointerSensor = useSensor(PointerSensor, { activationConstraint: { distance: 10 } })
   const mouseSensor = useSensor(MouseSensor, { activationConstraint: { distance: 10 } })
@@ -138,11 +138,13 @@ function BoardContent({ board, createNewColumn, createNewCard }) {
     // console.log(event)
     //không làm gì thêm nếu như đang kéo (drag) column
     if (activeDragItemType === ACTIVE_DRAG_ITEM_TYPE.COLUMN) return
+
     // dam bao khong ton tai active hoac over (khi keo ra khoi pham vi container) thi khong lam gi
     if (!active || !over) return
 
     //activeeDranggingCard: la card dang duoc keo
     const { id: activeDraggingCardId, data:{ current: activeDraggingCardData } } = active
+
     //overCard: la card dc tuong tac tren hoac duoi so voi card duoc keo o tren
     const { id: overCardId } = over
 
@@ -226,15 +228,20 @@ function BoardContent({ board, createNewColumn, createNewCard }) {
     }
     //xu ly keo tha column trong mot cai boardContent
     if (activeDragItemType === ACTIVE_DRAG_ITEM_TYPE.COLUMN ) {
+
       //neu sau khi vi tri keo tha khac voi vi tri ban dau
-      if (!over || !active) {
+      if (over || active) {
         //lay vi tri cu tu thang active
         const oldColumIndex = orderedColumns.findIndex(c => c._id === active.id)
+
         //lay vi tri moi tu thang over
         const newColumnIndex = orderedColumns.findIndex(c => c._id === over.id)
+
         //dung arrayMove cua thang dnd-kit de sap xep lai mang Columns ban dau
         const dndOrderedColums = arrayMove(orderedColumns, oldColumIndex, newColumnIndex)
+
         // const dndOrderedColumsIds = dndOrderedColums.map(c => c._id)
+        moveColumns(dndOrderedColums)
         setOrderedColumns(dndOrderedColums)
       }
     }
