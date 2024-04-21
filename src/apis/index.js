@@ -19,3 +19,8 @@ export const createNewCardAPI = async (newCardData) => {
   const request = await axios.post(`${API_ROOT}/v1/cards/`, newCardData)
   return request.data
 }
+
+export const updateDetailBoardsAPI = async (boardId, updateData) => {
+  const request = await axios.put(`${API_ROOT}/v1/boards/${boardId}`, updateData)
+  return request.data
+}

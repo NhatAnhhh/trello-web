@@ -222,6 +222,7 @@ function Column({ column, createNewCard }) {
               />
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <Button
+                  data-no-dnd = 'true'
                   onClick={addNewCardTitle}
                   variant='contained' color='success' size='small'
                   sx={{
