@@ -1,6 +1,6 @@
 import { Box } from '@mui/system'
 import ListColumns from './ListColumns/ListColumns'
-import { mapOrder } from '~/utils/sorts'
+// import { mapOrder } from '~/utils/sorts'
 import { DndContext,
   DragOverlay,
   // MouseSensor,
@@ -28,9 +28,9 @@ const ACTIVE_DRAG_ITEM_TYPE ={
   CARD: 'ACTIVE_DRAG_ITEM_CARD'
 }
 
-function BoardContent({ board, createNewColumn, createNewCard, moveColumns }) {
+function BoardContent({ board, createNewColumn, createNewCard, moveColumns, moveCardInTheSameColumn }) {
+
   // Yeu cau chuot di chuyen 10px thi moi dc kich hoat event, fix TH click bi goi envet
-  // const pointerSensor = useSensor(PointerSensor, { activationConstraint: { distance: 10 } })
   const mouseSensor = useSensor(MouseSensor, { activationConstraint: { distance: 10 } })
   // nhan giu 250ms va di chuyen trn lech 5px thi moi kich hoat event
   const touchSensor = useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 5 } })
@@ -50,7 +50,7 @@ function BoardContent({ board, createNewColumn, createNewCard, moveColumns }) {
   const lastOverId = useRef(null)
 
   useEffect(() => {
-    setOrderedColumns(mapOrder(board?.columns, board?.columnOrderIds, '_id'))
+    setOrderedColumns(board.columns)
   }, [board])
 
   //tim mot column theo card Id
@@ -169,31 +169,32 @@ function BoardContent({ board, createNewColumn, createNewCard, moveColumns }) {
 
   //trigger khi kết thúc hành động kéo thả (drag) một phần tử => hành động thả (drop)
   const handleDragEnd = (event) => {
-    // console.log('DragEnd :', event)
     // kiem tra keo tha
     const { active, over } = event
-
+    // dam bao neu khong ton tai active hoac over thi khong lam gi (tranh bi crash page)
     if (!over|| !active) return
 
+    //xu ly keo yha card
     if (activeDragItemType === ACTIVE_DRAG_ITEM_TYPE.CARD) {
-      // console.log('hanh dong keo tha card')
 
       //activeeDranggingCard: la card dang duoc keo
       const { id: activeDraggingCardId, data:{ current: activeDraggingCardData } } = active
+
       //overCard: la card dc tuong tac tren hoac duoi so voi card duoc keo o tren
       const { id: overCardId } = over
 
+      //tim 2 column theo cardId
       const activeColumn = findColumnByCardId(activeDraggingCardId)
       const overColumn = findColumnByCardId(overCardId)
-      // console.log(activeDragItemData)
+
       //neu khong ton tai 1 trong 2 column thi khong lam gi het
       if (!activeColumn ||!overColumn) return
 
-      //hanh dong keo tha card giua 2 column khac nhau
-      //phai dung toi activeDragItemData hoac oldColumnWhenDraggingCard._id chu khong phai activeData trong scope trong handleGragEnd vi sau khi
-      //di qua onDragOver state cua card da bi cap nhat lai.
+      /* hanh dong keo tha card giua 2 column khac nhau
+      phai dung toi activeDragItemData hoac oldColumnWhenDraggingCard._id chu khong phai activeData trong scope trong handleGragEnd vi sau khi
+      di qua onDragOver state cua card da bi cap nhat lai. */
       if (oldColumnWhenDraggingCard._id !== overColumn._id) {
-        //
+
         moveCardBetweenDifferenColumns(
           overColumn,
           overCardId,
@@ -212,7 +213,9 @@ function BoardContent({ board, createNewColumn, createNewCard, moveColumns }) {
         const newCardIndex = overColumn?.cards?.findIndex(c => c._id === overCardId)
         //dung arrymove de keo card (logic tuong tu keo columns)
         const dndOrderredCards = arrayMove(oldColumnWhenDraggingCard?.cards, oldCardIndex, newCardIndex)
+        const dndOrderredCardIds = dndOrderredCards.map(card => card._id)
 
+        //goi update state o day de tranh bi delay or bi Flickering giao dien luc keo tha.
         setOrderedColumns (prevColumns => {
           //clone mang orderedColumns cu ra mot mang moi de cap nhat lai data roi return
           const nextColums = cloneDeep(prevColumns)
@@ -220,10 +223,16 @@ function BoardContent({ board, createNewColumn, createNewCard, moveColumns }) {
           const targetColumn = nextColums.find(column => column._id === overColumn._id)
           //cap nhat lai 2 gia tri card va cardOrderIds cho targetColumn
           targetColumn.cards = dndOrderredCards
-          targetColumn.cardOrderIds = dndOrderredCards.map(card => card._id)
+          targetColumn.cardOrderIds = dndOrderredCardIds
 
+          //tra ve gia tri state moi
           return nextColums
         })
+
+        /**
+        * Gọi lên props function moveCardInTheSameColumn nằm ở component cha cao nhất (boards/_id.jsx)
+        */
+        moveCardInTheSameColumn(dndOrderredCards, dndOrderredCardIds, oldColumnWhenDraggingCard._id)
       }
     }
     //xu ly keo tha column trong mot cai boardContent

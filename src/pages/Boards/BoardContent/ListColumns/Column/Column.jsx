@@ -20,7 +20,7 @@ import AddCardIcon from '@mui/icons-material/AddCard'
 import Button from '@mui/material/Button'
 import DragHandleIcon from '@mui/icons-material/DragHandle'
 import ListCards from './ListCards/ListCards'
-import { mapOrder } from '~/utils/sorts'
+// import { mapOrder } from '~/utils/sorts'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { TextField } from '@mui/material'
@@ -42,7 +42,7 @@ function Column({ column, createNewCard }) {
     opacity: isDragging ? 0.5: undefined
   }
 
-  const orderedCard = mapOrder(column?.cards, column?.cardOrderIds, '_id')
+  const orderedCard = (column.cards)
   const [anchorEl, setAnchorEl] = React.useState(null)
   const open = Boolean(anchorEl)
   const handleClick = (event) => {
