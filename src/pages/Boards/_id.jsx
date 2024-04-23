@@ -5,9 +5,14 @@ import BoardBar from './BoardBar/BoardBar'
 import BoardContent from './BoardContent/BoardContent'
 // import { mockData } from '~/apis/mock-data'
 import { useEffect, useState } from 'react'
-import { fetchBoardDetailsAPI, createNewColumnAPI, createNewCardAPI, updateDetailBoardsAPI } from '~/apis'
+import { fetchBoardDetailsAPI, createNewColumnAPI, createNewCardAPI, updateDetailBoardsAPI, updateDetailColumnAPI } from '~/apis'
 import { generatePlaceholderCard } from '~/utils/formatter'
 import { isEmpty } from 'lodash'
+import { mapOrder } from '~/utils/sorts'
+import { Box } from '@mui/system'
+import CircularProgress from '@mui/material/CircularProgress'
+import { Typography } from '@mui/material'
+
 
 function Board() {
 
@@ -18,12 +23,20 @@ function Board() {
 
     //call API
     fetchBoardDetailsAPI(boardId).then(board => {
+      // Sap xep thu tu cac column truoc khi chuyen du lieu xuong xuong ben duoi cac compent con
+      board.columns = mapOrder(board.columns, board.columnOrderIds, '_id')
+
       board.columns.forEach(column => {
 
-        // khi tao mot clumn moi thi chua co card
         if (isEmpty(column.cards)) {
+        // khi tao mot clumn moi thi chua co card
+
           column.cards = [generatePlaceholderCard(column)]
           column.cardOrderIds = [generatePlaceholderCard(board)._id]
+        }
+        else {
+        // Sap xep thu tu cac card truoc khi chuyen du lieu xuong xuong ben duoi cac compent con
+          column.cards = mapOrder(column.cards, column.cardOrderIds, '_id')
         }
       })
       setBoard(board)
@@ -55,10 +68,8 @@ function Board() {
       ...newCardData,
       boardId: board._id
     })
-    // console.log(createdCard)
 
     // cap nhat state board
-
     const newBoard = { ...board }
     const updateToColumn = newBoard.columns.find(column => column._id === createdCard.columnId)
     if (updateToColumn) {
@@ -69,8 +80,10 @@ function Board() {
     setBoard(newBoard)
   }
 
-  const moveColumns = async (dndOrderedColums) => {
 
+  // function nay co nhiem vu goi API va xu ly khi keo tha cloumn
+  const moveColumns = async (dndOrderedColums) => {
+    //update cho chuan du lieu state board
     const dndOrderedColumsIds = dndOrderedColums.map(c => c._id)
     const newBoard = { ...board }
     newBoard.columns = dndOrderedColums
@@ -79,6 +92,38 @@ function Board() {
 
     //Call API
     await updateDetailBoardsAPI(newBoard._id, { columnOrderIds: dndOrderedColumsIds })
+  }
+
+  // function nay co nhiem vu goi API va xu ly khi keo tha cloumn, Chi can goi API de update mang cardOrderIds cua column chua no
+  const moveCardInTheSameColumn = (dndOrderredCards, dndOrderredCardIds, columnId) => {
+    //update cho chuan du lieu state board
+    const newBoard = { ...board }
+    const updateToColumn = newBoard.columns.find(column => column._id === columnId)
+    if (updateToColumn) {
+      updateToColumn.cards = dndOrderredCards
+      updateToColumn.cardOrderIds = dndOrderredCardIds
+    }
+
+    setBoard(newBoard)
+
+    //call API
+    updateDetailColumnAPI(columnId, { cardOrderIds: dndOrderredCardIds })
+
+  }
+
+  if (!board) {
+    return (
+      <Box sx={{ display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        gap: 2,
+        width: '100vw',
+        height:'100vh'
+      }}>
+        <CircularProgress />
+        <Typography > Board Loading... </Typography>
+      </Box>
+    )
   }
 
   return (
@@ -91,6 +136,7 @@ function Board() {
           createNewColumn={createNewColumn}
           createNewCard = {createNewCard}
           moveColumns = {moveColumns}
+          moveCardInTheSameColumn = {moveCardInTheSameColumn}
         />
       </Container>
     </>
