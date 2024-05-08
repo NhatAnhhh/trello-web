@@ -23,12 +23,13 @@ import Column from './ListColumns/Column/Column'
 import Card from './ListColumns/Column/ListCards/Card/Card'
 import { cloneDeep, isEmpty } from 'lodash'
 
+
 const ACTIVE_DRAG_ITEM_TYPE ={
   COLUMN: 'ACTIVE_DRAG_ITEM_COLUMN',
   CARD: 'ACTIVE_DRAG_ITEM_CARD'
 }
 
-function BoardContent({ board, createNewColumn, createNewCard, moveColumns, moveCardInTheSameColumn }) {
+function BoardContent({ board, createNewColumn, createNewCard, moveColumns, moveCardInTheSameColumn, moveCardToDifferentToColumn, deleteColumnDetails }) {
 
   // Yeu cau chuot di chuyen 10px thi moi dc kich hoat event, fix TH click bi goi envet
   const mouseSensor = useSensor(MouseSensor, { activationConstraint: { distance: 10 } })
@@ -53,11 +54,12 @@ function BoardContent({ board, createNewColumn, createNewCard, moveColumns, move
     setOrderedColumns(board.columns)
   }, [board])
 
+
   //tim mot column theo card Id
   const findColumnByCardId = (CardId) => {
     return orderedColumns.find(column => column?.cards?.map(card => card._id)?.includes(CardId))
   }
-
+  //Khoi tao function chung xu ly cap nhat lai state khi di chuyen card giua cac column khac nhau
   const moveCardBetweenDifferenColumns = (
     overColumn,
     overCardId,
@@ -65,7 +67,8 @@ function BoardContent({ board, createNewColumn, createNewCard, moveColumns, move
     over,
     activeColumn,
     activeDraggingCardId,
-    activeDraggingCardData
+    activeDraggingCardData,
+    triggerFrom
   ) => {
     setOrderedColumns (prevColumns => {
       // Tìm vị trí (index) của cái overCard trong column đích (nơi mà activeCard sắp được thả)
@@ -116,6 +119,10 @@ function BoardContent({ board, createNewColumn, createNewCard, moveColumns, move
         // console.log(nextOverColumn.cardOrderIds)
       }
 
+      if (triggerFrom === 'handleDragEnd') {
+        moveCardToDifferentToColumn( activeDraggingCardId, oldColumnWhenDraggingCard._id, nextOverColumn._id, nextColumns)
+      }
+
       return nextColumns
     })
   }
@@ -161,7 +168,8 @@ function BoardContent({ board, createNewColumn, createNewCard, moveColumns, move
         over,
         activeColumn,
         activeDraggingCardId,
-        activeDraggingCardData
+        activeDraggingCardData,
+        'handleDragOver'
       )
     }
   }
@@ -202,7 +210,8 @@ function BoardContent({ board, createNewColumn, createNewCard, moveColumns, move
           over,
           activeColumn,
           activeDraggingCardId,
-          activeDraggingCardData
+          activeDraggingCardData,
+          'handleDragEnd'
         )
       } else {
         //hanh dong keo tha card trong 1 column
@@ -319,6 +328,7 @@ function BoardContent({ board, createNewColumn, createNewCard, moveColumns, move
           columns = { orderedColumns }
           createNewColumn = { createNewColumn }
           createNewCard = { createNewCard }
+          deleteColumnDetails = {deleteColumnDetails}
         />
         <DragOverlay dropAnimation={customDropAnimation} >
           { !activeDragItemId && null }

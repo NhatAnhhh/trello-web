@@ -10,13 +10,16 @@ import theme from './theme'
 //Cấu hình react Toastify
 import { ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
+import { ConfirmProvider } from 'material-ui-confirm'
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   // <React.StrictMode>
   <CssVarsProvider theme={theme}>
-    <CssBaseline/>
-    <App />
-    <ToastContainer position="top-center" theme="colored" autoClose={1100}/>
+    <ConfirmProvider>
+      <CssBaseline/>
+      <App />
+      <ToastContainer position="top-center" theme="colored" autoClose={1100}/>
+    </ConfirmProvider>
   </CssVarsProvider >
   // </React.StrictMode>
 )
